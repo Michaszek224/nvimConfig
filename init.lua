@@ -265,9 +265,9 @@ require('lazy').setup({
     config = function()
       require('supermaven-nvim').setup {
         keymaps = {
-          accept_suggestion = '<Tab>',
-          clear_suggestion = '<C-]>',
-          accept_word = '<C-j>',
+          accept_suggestion = '<C-y>',
+          clear_suggestion = '<C-e>',
+          accept_word = '<C-o>',
         },
         color = {
           suggestion_color = '#808080',
@@ -827,6 +827,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        html = { 'html-lsp' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
