@@ -164,10 +164,23 @@ vim.o.scrolloff = 10
 -- instead raise a dialog asking if you wish to save the current file(s)
 -- See `:help 'confirm'`
 vim.o.confirm = true
-
+-- Tab/indentation settings
+vim.o.tabstop = 4 -- Tab wyświetla się jako 4 spacje
+vim.o.shiftwidth = 4 -- Wcięcie przy >> i << to 4 spacje
+vim.o.softtabstop = 4 -- Tab wstawia 4 spacje
+vim.o.expandtab = true -- Zamienia Tab na spacje
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
-
+-- Wymuś wcięcia dla Pythona
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = function()
+    vim.opt_local.tabstop = 4
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.softtabstop = 4
+    vim.opt_local.expandtab = true
+  end,
+})
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
