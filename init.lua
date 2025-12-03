@@ -290,6 +290,49 @@ require('lazy').setup({
     end,
   }, -- Detect tabstop and shiftwidth automatically
 
+  {
+    'linux-cultist/venv-selector.nvim',
+    dependencies = { 'neovim/nvim-lspconfig', 'nvim-telescope/telescope.nvim', 'mfussenegger/nvim-dap-python' },
+    opts = {
+      settings = {
+        options = {
+          -- TO JEST KLUCZ DO TWOJEGO PYTANIA:
+          -- Jeśli raz wybierzesz venv, plugin zapamięta go przy ponownym otwarciu projektu.
+          enable_cached_venvs = true,
+
+          -- Pokaż powiadomienie, jaki venv został załadowany
+          notify_user_on_venv_activation = true,
+        },
+
+        -- Strategia szukania:
+        -- Ponieważ używasz uv, Twój venv to zazwyczaj folder ".venv" w projekcie.
+        -- Poniższa konfiguracja priorytetyzuje szukanie właśnie tam.
+        search = {
+          cwd = {
+            command = 'fd python$ .venv/bin', -- Szuka pliku python w folderze .venv wewnątrz projektu
+          },
+        },
+      },
+    },
+    keys = {
+      { '<leader>cv', '<cmd>VenvSelect<cr>', desc = 'Select [V]irtualEnv' },
+    },
+  },
+  -- [DODAJ TO] Bazy danych (SQL)
+  {
+    'tpope/vim-dadbod',
+    dependencies = {
+      'kristijanhusak/vim-dadbod-ui',
+      'kristijanhusak/vim-dadbod-completion',
+    },
+    cmd = { 'DBUI', 'DB' },
+    init = function()
+      vim.g.db_ui_use_nerd_fonts = 1
+    end,
+  },
+
+  -- ... (reszta pluginów)
+
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
   -- keys can be used to configure plugin behavior/loading/etc.
@@ -482,6 +525,7 @@ require('lazy').setup({
         pickers = {
           find_files = {
             hidden = true,
+            no_ignore = true,
           },
         },
 
@@ -788,6 +832,9 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'ruff',
+        'debugpy',
+        'pyright',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -841,6 +888,7 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         html = { 'html-lsp' },
+        python = { 'ruff_format', 'ruff_fix' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1029,6 +1077,23 @@ require('lazy').setup({
       },
       indent = { enable = true, disable = { 'ruby' } },
     },
+    {
+      'nvim-treesitter/nvim-treesitter-context',
+      event = 'BufReadPre', -- Load when opening a file
+      config = function()
+        require('treesitter-context').setup {
+          enable = true,
+          max_lines = 3, -- How many lines the window should take up
+          min_window_height = 0,
+          line_numbers = true,
+          multiline_threshold = 20, -- Maximum number of lines to show for a single context
+          trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded
+          mode = 'cursor', -- Line used to calculate context. Choices: 'cursor', 'topline'
+          separator = '-',
+          zindex = 20, -- The Z-index of the context window
+        }
+      end,
+    },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
@@ -1087,3 +1152,10 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- Make Neovim background transparent
+vim.api.nvim_set_hl(0, 'Normal', { bg = 'none' })
+vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })
+vim.api.nvim_set_hl(0, 'SignColumn', { bg = 'none' })
+vim.api.nvim_set_hl(0, 'LineNr', { bg = 'none' })
+vim.api.nvim_set_hl(0, 'FloatBorder', { bg = 'none' })
