@@ -292,6 +292,7 @@ require('lazy').setup({
 
   {
     'linux-cultist/venv-selector.nvim',
+    branch = 'regexp',
     dependencies = { 'neovim/nvim-lspconfig', 'nvim-telescope/telescope.nvim', 'mfussenegger/nvim-dap-python' },
     opts = {
       settings = {
@@ -1159,3 +1160,25 @@ vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })
 vim.api.nvim_set_hl(0, 'SignColumn', { bg = 'none' })
 vim.api.nvim_set_hl(0, 'LineNr', { bg = 'none' })
 vim.api.nvim_set_hl(0, 'FloatBorder', { bg = 'none' })
+
+-- Automatyczne ładowanie .venv (Backend Developer Style)
+local function load_venv()
+  local venv_path = vim.fn.getcwd() .. '/.venv'
+  local python_bin = venv_path .. '/bin/python'
+
+  -- Sprawdź czy .venv/bin/python istnieje
+  if vim.fn.executable(python_bin) == 1 then
+    -- Ustaw zmienną środowiskową dla terminala i procesów podrzędnych
+    vim.env.VIRTUAL_ENV = venv_path
+    vim.env.PATH = venv_path .. '/bin:' .. vim.env.PATH
+
+    -- Ustaw pythona dla providera Neovima (ważne dla pluginów)
+    vim.g.python3_host_prog = python_bin
+
+    -- Poinformuj użytkownika (opcjonalnie)
+    -- print("Aktywowano venv: " .. venv_path)
+  end
+end
+
+-- Uruchom przy starcie
+load_venv()
