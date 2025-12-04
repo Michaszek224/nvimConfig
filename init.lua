@@ -292,7 +292,6 @@ require('lazy').setup({
 
   {
     'linux-cultist/venv-selector.nvim',
-    branch = 'regexp',
     dependencies = { 'neovim/nvim-lspconfig', 'nvim-telescope/telescope.nvim', 'mfussenegger/nvim-dap-python' },
     opts = {
       settings = {
@@ -330,6 +329,32 @@ require('lazy').setup({
     init = function()
       vim.g.db_ui_use_nerd_fonts = 1
     end,
+  },
+  {
+    'chrisbra/csv.vim',
+    ft = 'csv',
+    config = function()
+      vim.g.csv_delim = ','
+      vim.g.csv_arrange_align = 'l.'
+    end,
+  },
+  -- Docker Support
+  {
+    'esensar/nvim-dev-container',
+    dependencies = 'nvim-treesitter/nvim-treesitter',
+    config = function()
+      require('devcontainer').setup {}
+    end,
+  },
+
+  -- YAML Support enhancement
+  {
+    'cuducos/yaml.nvim',
+    ft = { 'yaml' },
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-telescope/telescope.nvim',
+    },
   },
 
   -- ... (reszta pluginów)
@@ -836,6 +861,9 @@ require('lazy').setup({
         'ruff',
         'debugpy',
         'pyright',
+        'yamlls',
+        'jsonls',
+        'sqlls',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -890,6 +918,10 @@ require('lazy').setup({
         lua = { 'stylua' },
         html = { 'html-lsp' },
         python = { 'ruff_format', 'ruff_fix' },
+        sql = { 'sql-formatter' },
+        yaml = { 'prettier' },
+        json = { 'prettier' },
+        markdown = { 'prettier' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -1182,3 +1214,17 @@ end
 
 -- Uruchom przy starcie
 load_venv()
+-- Powiadomienie o załadowanym venv
+local function notify_venv()
+  if vim.env.VIRTUAL_ENV then
+    local venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV, ':t')
+    vim.notify('🐍 Virtual environment: ' .. venv_name, vim.log.levels.INFO)
+  end
+end
+
+-- Pokaż venv przy starcie
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    vim.defer_fn(notify_venv, 500)
+  end,
+})
