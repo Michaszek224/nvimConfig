@@ -140,7 +140,7 @@ return {
     },
   },
 
-  { -- mini.ai (va), yinq, ci'), mini.surround (gsa/gsd/gsr), statusline
+  { -- mini.ai (va), yinq, ci'), mini.surround (gsa/gsd/gsr)
     'echasnovski/mini.nvim',
     config = function()
       require('mini.ai').setup { n_lines = 500 }
@@ -156,13 +156,6 @@ return {
           update_n_lines = 'gsn',
         },
       }
-
-      local statusline = require 'mini.statusline'
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
     end,
   },
 }
