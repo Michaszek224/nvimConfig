@@ -821,14 +821,22 @@ require('lazy').setup({
             '--background-index',
             '--clang-tidy',
             '--header-insertion=iwyu',
-            '--completion-style=detailed',
-            '--function-arg-placeholders',
+            '--function-arg-placeholders=false',
             '--fallback-style={BasedOnStyle: LLVM, IndentWidth: 4}',
           },
           init_options = {
-            usePlaceholders = true,
+            usePlaceholders = false,
             completeUnimported = true,
             clangdFileStatus = true,
+          },
+          capabilities = {
+            textDocument = {
+              completion = {
+                completionItem = {
+                  snippetSupport = false, -- BLOKUJE: potworki typu `init-statement`
+                },
+              },
+            },
           },
         },
         gopls = {},
