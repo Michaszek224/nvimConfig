@@ -99,6 +99,11 @@ local present = {
   'render-markdown.nvim',
   'SchemaStore.nvim',
 }
+local ts_spec = plugins['nvim-treesitter'] or {}
+report(ts_spec.branch == 'main', 'treesitter_main_branch', 'branch=' .. tostring(ts_spec.branch))
+local legacy_parsers = vim.fn.glob(vim.fn.stdpath 'data' .. '/lazy/nvim-treesitter/parser/*.so', false, true)
+report(#legacy_parsers == 0, 'treesitter_no_legacy_parsers', #legacy_parsers .. ' old master-branch parsers on rtp')
+
 local still = vim.tbl_filter(function(n)
   return plugins[n] ~= nil
 end, absent)
