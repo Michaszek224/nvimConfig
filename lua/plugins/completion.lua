@@ -45,7 +45,7 @@ return {
         },
       },
       snippets = { preset = 'luasnip' },
-      fuzzy = { implementation = 'lua' },
+      fuzzy = { implementation = 'prefer_rust_with_warning' }, -- prebuilt Rust matcher, Lua fallback
       signature = { enabled = true },
     },
   },

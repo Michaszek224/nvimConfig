@@ -16,7 +16,7 @@ return {
       { 'mason-org/mason.nvim', opts = {} }, -- must load before its dependents
       'mason-org/mason-lspconfig.nvim',
       'WhoIsSethDaniel/mason-tool-installer.nvim',
-      { 'j-hui/fidget.nvim', opts = {} },
+      { 'b0o/SchemaStore.nvim', lazy = true }, -- JSON/YAML schemas (package.json, compose, GH Actions, k8s...)
       'saghen/blink.cmp',
     },
     config = function()
@@ -40,6 +40,11 @@ return {
           local client = vim.lsp.get_client_by_id(event.data.client_id)
           if not client then
             return
+          end
+
+          -- pyright owns hover in Python; ruff only lints, fixes and organizes imports
+          if client.name == 'ruff' then
+            client.server_capabilities.hoverProvider = false
           end
 
           -- Highlight references of the symbol under the cursor after `updatetime`.
@@ -107,10 +112,27 @@ return {
           capabilities = { textDocument = { completion = { completionItem = { snippetSupport = false } } } },
         },
         gopls = {},
-        pyright = {},
-        rust_analyzer = {},
-        jsonls = {},
-        yamlls = {},
+        pyright = {
+          settings = { pyright = { disableOrganizeImports = true } }, -- ruff does it
+        },
+        ruff = {},
+        rust_analyzer = {
+          settings = { ['rust-analyzer'] = { check = { command = 'clippy' } } },
+        },
+        jsonls = {
+          settings = {
+            json = { schemas = require('schemastore').json.schemas(), validate = { enable = true } },
+          },
+        },
+        yamlls = {
+          settings = {
+            yaml = {
+              schemaStore = { enable = false, url = '' }, -- use SchemaStore.nvim's catalog instead
+              schemas = require('schemastore').yaml.schemas(),
+            },
+          },
+        },
+        docker_language_server = {}, -- official Docker LSP: Dockerfile + compose
         sqlls = {},
         lua_ls = {
           settings = { Lua = { completion = { callSnippet = 'Replace' } } },
@@ -122,10 +144,11 @@ return {
       vim.list_extend(ensure_installed, {
         'stylua',
         'clang-format',
-        'ruff',
         'prettier',
         'sql-formatter',
         'goimports',
+        'hadolint',
+        'markdownlint',
         'debugpy',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }

@@ -1,5 +1,15 @@
--- Global autocommands.
+-- Global autocommands and filetype detection.
 local group = vim.api.nvim_create_augroup('user-config', { clear = true })
+
+-- Compose files need their own filetype for docker_language_server (yamlls handles it too).
+vim.filetype.add {
+  filename = {
+    ['docker-compose.yml'] = 'yaml.docker-compose',
+    ['docker-compose.yaml'] = 'yaml.docker-compose',
+    ['compose.yml'] = 'yaml.docker-compose',
+    ['compose.yaml'] = 'yaml.docker-compose',
+  },
+}
 
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight yanked text',

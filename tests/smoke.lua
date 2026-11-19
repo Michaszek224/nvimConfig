@@ -84,6 +84,26 @@ for _, fx in ipairs(fixtures) do
   report(ts_ok, 'treesitter:' .. rel, 'ft=' .. vim.bo[buf].filetype)
 end
 
+-- LSP / lint settings ----------------------------------------------------------------
+local function client(name)
+  return vim.lsp.get_clients({ name = name })[1]
+end
+local function setting(name, ...)
+  local c = client(name)
+  return c and vim.tbl_get(c.config.settings or {}, ...)
+end
+local ruff = client 'ruff'
+report(ruff ~= nil and not ruff.server_capabilities.hoverProvider, 'ruff_hover_disabled', '')
+report(setting('pyright', 'pyright', 'disableOrganizeImports') == true, 'pyright_no_organize_imports', '')
+report(setting('rust_analyzer', 'rust-analyzer', 'check', 'command') == 'clippy', 'rust_clippy', '')
+local json_schemas = setting('jsonls', 'json', 'schemas') or {}
+report(#json_schemas > 50, 'jsonls_schemastore', #json_schemas .. ' schemas')
+local yaml_schemas = setting('yamlls', 'yaml', 'schemas') or {}
+report(vim.tbl_count(yaml_schemas) > 50, 'yamlls_schemastore', vim.tbl_count(yaml_schemas) .. ' schemas')
+report(vim.filetype.match { filename = 'docker-compose.yml' } == 'yaml.docker-compose', 'compose_filetype', '')
+local ok_lint, lint = pcall(require, 'lint')
+report(ok_lint and vim.tbl_contains(lint.linters_by_ft.dockerfile or {}, 'hadolint'), 'lint_hadolint', '')
+
 -- Plugins ------------------------------------------------------------------------
 local plugins = require('lazy.core.config').plugins
 local absent = { 'supermaven-nvim', 'csv.vim', 'yaml.nvim', 'neo-tree.nvim', 'nvim-dev-container', 'fidget.nvim' }
