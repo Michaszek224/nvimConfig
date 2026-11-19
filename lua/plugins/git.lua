@@ -1,5 +1,26 @@
 -- Git integration.
 return {
+  { -- Full git TUI in a floating window (needs the `lazygit` binary)
+    'kdheepak/lazygit.nvim',
+    cmd = { 'LazyGit', 'LazyGitCurrentFile', 'LazyGitLog' },
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    keys = {
+      { '<leader>gg', '<cmd>LazyGit<cr>', desc = 'Lazy[G]it' },
+    },
+  },
+
+  { -- Side-by-side diffs of commits/branches, file history, merge conflicts
+    'dlyongemallo/diffview-plus.nvim', -- maintained fork of sindrets/diffview.nvim
+    cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewFileHistory' },
+    keys = {
+      { '<leader>gd', '<cmd>DiffviewOpen<cr>', desc = '[G]it [D]iff view (working tree)' },
+      { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = '[G]it file [H]istory' },
+      { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = '[G]it repo [H]istory' },
+      { '<leader>gq', '<cmd>DiffviewClose<cr>', desc = '[G]it diff view [Q]uit' },
+    },
+    opts = {},
+  },
+
   { -- Change signs in the gutter + hunk actions
     'lewis6991/gitsigns.nvim',
     opts = {

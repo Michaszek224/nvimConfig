@@ -30,6 +30,7 @@ return {
         { '<leader>c', group = '[C]ode' },
         { '<leader>d', group = '[D]atabase' },
         { '<leader>x', group = 'Trouble' },
+        { '<leader>g', group = '[G]it' },
         { 'gs', group = 'Surround', mode = { 'n', 'x' } },
       },
     },
