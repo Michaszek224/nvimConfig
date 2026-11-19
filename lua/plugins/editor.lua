@@ -71,24 +71,91 @@ return {
     end,
   },
 
-  { -- File tree
-    'nvim-neo-tree/neo-tree.nvim',
-    version = '*',
-    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-tree/nvim-web-devicons', 'MunifTanjim/nui.nvim' },
-    lazy = false,
+  { -- File explorer: edit a directory like a buffer, :w applies renames/moves/deletes
+    'stevearc/oil.nvim',
+    lazy = false, -- must be loaded to take over directory buffers (`nvim .`)
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
     keys = {
-      { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
+      { '-', '<cmd>Oil<cr>', desc = 'Open parent directory (oil)' },
     },
+    ---@module 'oil'
+    ---@type oil.SetupOpts
     opts = {
-      filesystem = { window = { mappings = { ['\\'] = 'close_window' } } },
+      default_file_explorer = true, -- replaces netrw
+      view_options = { show_hidden = true },
+      skip_confirm_for_simple_edits = false, -- always confirm file operations
     },
   },
 
-  { -- mini.ai (va), yinq, ci'), mini.surround, statusline
+  { -- Jump anywhere on screen: s + 2 chars + label
+    'folke/flash.nvim',
+    event = 'VeryLazy',
+    opts = {},
+    keys = {
+      {
+        's',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').jump()
+        end,
+        desc = 'Flash',
+      },
+      {
+        'S',
+        mode = { 'n', 'x', 'o' },
+        function()
+          require('flash').treesitter()
+        end,
+        desc = 'Flash Treesitter (select node)',
+      },
+      {
+        'r',
+        mode = 'o',
+        function()
+          require('flash').remote()
+        end,
+        desc = 'Remote Flash',
+      },
+      {
+        '<c-s>',
+        mode = 'c',
+        function()
+          require('flash').toggle()
+        end,
+        desc = 'Toggle Flash Search',
+      },
+    },
+  },
+
+  { -- Project-wide lists: diagnostics, symbols, LSP references, quickfix
+    'folke/trouble.nvim',
+    cmd = 'Trouble',
+    opts = {},
+    keys = {
+      { '<leader>xx', '<cmd>Trouble diagnostics toggle<cr>', desc = 'Diagnostics (Trouble)' },
+      { '<leader>xX', '<cmd>Trouble diagnostics toggle filter.buf=0<cr>', desc = 'Buffer Diagnostics (Trouble)' },
+      { '<leader>xs', '<cmd>Trouble symbols toggle<cr>', desc = 'Symbols (Trouble)' },
+      { '<leader>xl', '<cmd>Trouble lsp toggle<cr>', desc = 'LSP Definitions / references (Trouble)' },
+      { '<leader>xq', '<cmd>Trouble qflist toggle<cr>', desc = 'Quickfix List (Trouble)' },
+    },
+  },
+
+  { -- mini.ai (va), yinq, ci'), mini.surround (gsa/gsd/gsr), statusline
     'echasnovski/mini.nvim',
     config = function()
       require('mini.ai').setup { n_lines = 500 }
-      require('mini.surround').setup()
+      -- `s` belongs to flash, so surround lives under `gs`
+      require('mini.surround').setup {
+        mappings = {
+          add = 'gsa',
+          delete = 'gsd',
+          find = 'gsf',
+          find_left = 'gsF',
+          highlight = 'gsh',
+          replace = 'gsr',
+          update_n_lines = 'gsn',
+        },
+      }
 
       local statusline = require 'mini.statusline'
       statusline.setup { use_icons = vim.g.have_nerd_font }

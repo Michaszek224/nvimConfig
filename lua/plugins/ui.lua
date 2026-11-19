@@ -29,6 +29,8 @@ return {
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
         { '<leader>c', group = '[C]ode' },
         { '<leader>d', group = '[D]atabase' },
+        { '<leader>x', group = 'Trouble' },
+        { 'gs', group = 'Surround', mode = { 'n', 'x' } },
       },
     },
   },

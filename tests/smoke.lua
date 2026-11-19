@@ -156,6 +156,15 @@ for _, km in ipairs(keymaps) do
   report(ok, ('keymap:%s:%s'):format(km[1], km[2]), m.desc or '')
 end
 
+-- gsa actually surrounds (mini.surround moved off `s`) -----------------------------------
+vim.cmd.enew()
+vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'word' })
+vim.api.nvim_win_set_cursor(0, { 1, 0 })
+vim.api.nvim_feedkeys(vim.keycode 'gsaiw)', 'mx', false)
+local line = vim.api.nvim_get_current_line()
+report(line == '(word)', 'surround_gsa_works', 'line=' .. line)
+vim.cmd 'bwipeout!'
+
 -- Directory buffer opens oil ------------------------------------------------------------
 vim.cmd.edit(vim.fn.fnameescape(root))
 local is_oil = vim.wait(5000, function()

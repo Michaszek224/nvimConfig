@@ -13,4 +13,11 @@ require('lazy').setup({
   { import = 'plugins.lang' },
 }, {
   install = { colorscheme = { 'tokyonight-night' } },
+  change_detection = { notify = false },
+  performance = {
+    rtp = {
+      -- built-in plugins nobody here uses (netrw is replaced by oil)
+      disabled_plugins = { 'gzip', 'netrwPlugin', 'tarPlugin', 'tohtml', 'tutor', 'zipPlugin' },
+    },
+  },
 })
