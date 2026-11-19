@@ -14,6 +14,7 @@ require('lazy').setup({
 }, {
   install = { colorscheme = { 'tokyonight-night' } },
   change_detection = { notify = false },
+  rocks = { enabled = false }, -- no plugin needs luarocks; avoids a checkhealth error
   performance = {
     rtp = {
       -- built-in plugins nobody here uses (netrw is replaced by oil)
