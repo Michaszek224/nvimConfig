@@ -169,28 +169,10 @@ vim.o.tabstop = 4 -- Tab wyświetla się jako 4 spacje
 vim.o.shiftwidth = 4 -- Wcięcie przy >> i << to 4 spacje
 vim.o.softtabstop = 4 -- Tab wstawia 4 spacje
 vim.o.expandtab = true -- Zamienia Tab na spacje
+-- NOTE: dla C/C++ `cindent` włącza wbudowany $VIMRUNTIME/indent/c.vim (treesitter indent jest dla nich wyłączony niżej)
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
--- Wymuś wcięcia dla Pythona
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'python',
-  callback = function()
-    vim.opt_local.tabstop = 4
-    vim.opt_local.shiftwidth = 4
-    vim.opt_local.softtabstop = 4
-    vim.opt_local.expandtab = true
-  end,
-})
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'c', 'cpp', 'h' },
-  callback = function()
-    vim.opt_local.tabstop = 4
-    vim.opt_local.shiftwidth = 4
-    vim.opt_local.softtabstop = 4
-    vim.opt_local.expandtab = true
-    vim.opt_local.cindent = true -- klasyczny, stabilny algorytm wcięć C
-  end,
-})
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -269,7 +251,7 @@ rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-  'NMAC427/guess-indent.nvim',
+  'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
   {
     'akinsho/toggleterm.nvim',
     version = '*',
@@ -289,8 +271,9 @@ require('lazy').setup({
       require('supermaven-nvim').setup {
         keymaps = {
           accept_suggestion = '<C-q>',
-          clear_suggestion = '<C-e>',
-          accept_word = '<C-w>',
+          -- <C-e> zostaje dla blink.cmp (zamknij menu), <C-w> dla kasowania słowa wstecz
+          clear_suggestion = '<C-]>',
+          accept_word = '<C-j>',
         },
         color = {
           suggestion_color = '#808080',
@@ -298,7 +281,7 @@ require('lazy').setup({
         },
       }
     end,
-  }, -- Detect tabstop and shiftwidth automatically
+  },
 
   {
     'linux-cultist/venv-selector.nvim',
@@ -352,9 +335,17 @@ require('lazy').setup({
   {
     'esensar/nvim-dev-container',
     dependencies = 'nvim-treesitter/nvim-treesitter',
-    config = function()
-      require('devcontainer').setup {}
-    end,
+    cmd = {
+      'DevcontainerStart',
+      'DevcontainerAttach',
+      'DevcontainerExec',
+      'DevcontainerStop',
+      'DevcontainerStopAll',
+      'DevcontainerRemoveAll',
+      'DevcontainerLogs',
+      'DevcontainerEditNearestConfig',
+    },
+    opts = {},
   },
 
   -- YAML Support enhancement
@@ -366,8 +357,6 @@ require('lazy').setup({
       'nvim-telescope/telescope.nvim',
     },
   },
-
-  -- ... (reszta pluginów)
 
   -- NOTE: Plugins can also be added by using a table,
   -- with the first argument being the link and the following
@@ -467,6 +456,8 @@ require('lazy').setup({
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>c', group = '[C]ode' },
+        { '<leader>d', group = '[D]atabase' },
       },
     },
   },
@@ -477,14 +468,7 @@ require('lazy').setup({
       'neovim/nvim-lspconfig',
       'nvim-treesitter/nvim-treesitter',
     },
-    opts = {
-      -- lsp_keymaps = false,
-      -- other options
-    },
-    config = function(lp, opts)
-      require('go').setup(opts)
-    end,
-    event = { 'CmdlineEnter' },
+    opts = {},
     ft = { 'go', 'gomod' },
     build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
   },
@@ -552,8 +536,8 @@ require('lazy').setup({
         -- },
         pickers = {
           find_files = {
-            hidden = true,
-            no_ignore = true,
+            -- Pokazuj ukryte pliki (.env, .github/...), ale szanuj .gitignore i pomijaj .git/
+            find_command = { 'rg', '--files', '--hidden', '--glob', '!**/.git/*' },
           },
         },
 
@@ -716,26 +700,13 @@ require('lazy').setup({
           --  the definition of its *type*, not where it was *defined*.
           map('grt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
 
-          -- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
-          ---@param client vim.lsp.Client
-          ---@param method vim.lsp.protocol.Method
-          ---@param bufnr? integer some lsp support methods only in specific files
-          ---@return boolean
-          local function client_supports_method(client, method, bufnr)
-            if vim.fn.has 'nvim-0.11' == 1 then
-              return client:supports_method(method, bufnr)
-            else
-              return client.supports_method(method, { bufnr = bufnr })
-            end
-          end
-
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
           --    See `:help CursorHold` for information about when this is executed
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
               buffer = event.buf,
@@ -762,7 +733,7 @@ require('lazy').setup({
           -- code, if the language server you are using supports them
           --
           -- This may be unwanted, since they displace some of your code
-          if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
+          if client and client:supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint, event.buf) then
             map('<leader>th', function()
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
@@ -842,6 +813,9 @@ require('lazy').setup({
         gopls = {},
         pyright = {},
         rust_analyzer = {},
+        jsonls = {},
+        yamlls = {},
+        sqlls = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -882,31 +856,30 @@ require('lazy').setup({
       -- for you, so that they are available from within Neovim.
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
+        -- formattery używane przez conform.nvim
+        'stylua',
         'clang-format',
         'ruff',
+        'prettier',
+        'sql-formatter',
+        'goimports',
+        -- debugger Pythona (konfigurowany automatycznie przez mason-nvim-dap)
         'debugpy',
-        'pyright',
-        'yamlls',
-        'jsonls',
-        'sqlls',
-        'rust-analyzer',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+      -- Neovim 0.11+: konfiguracja serwerów przez vim.lsp.config().
+      -- Ustawienia są głęboko łączone z domyślnymi z nvim-lspconfig (lsp/<nazwa>.lua),
+      -- a '*' dotyczy wszystkich serwerów (capabilities z blink.cmp).
+      vim.lsp.config('*', { capabilities = capabilities })
+      for server_name, server in pairs(servers) do
+        vim.lsp.config(server_name, server)
+      end
+
+      -- mason-lspconfig v2 sam wywołuje vim.lsp.enable() dla zainstalowanych serwerów
       require('mason-lspconfig').setup {
-        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
+        ensure_installed = {}, -- instalacją zajmuje się mason-tool-installer
+        automatic_enable = true,
       }
     end,
   },
@@ -927,37 +900,23 @@ require('lazy').setup({
     },
     opts = {
       notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = {}
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          return nil
-        else
-          return {
-            timeout_ms = 500,
-            lsp_format = 'fallback',
-          }
-        end
-      end,
+      format_on_save = {
+        timeout_ms = 1000, -- prettier / sql-formatter (node) potrafią startować dłużej niż 500 ms
+        lsp_format = 'fallback',
+      },
       formatters_by_ft = {
         lua = { 'stylua' },
         c = { 'clang-format' },
         cpp = { 'clang-format' },
-        html = { 'html-lsp' },
-        python = { 'ruff_format', 'ruff_fix' },
+        html = { 'prettier' },
+        -- najpierw autofixy (mogą zmienić układ kodu), potem formatowanie
+        python = { 'ruff_fix', 'ruff_format' },
         sql = { 'sql-formatter' },
         yaml = { 'prettier' },
         json = { 'prettier' },
         markdown = { 'prettier' },
-        rust = { 'rustfmt' },
-        go = { 'goimports', 'gofmt' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        rust = { 'rustfmt' }, -- z rustup, nie z masona
+        go = { 'goimports' }, -- goimports = gofmt + porządkowanie importów
       },
       formatters = {
         ['clang-format'] = {
@@ -1047,8 +1006,15 @@ require('lazy').setup({
 
       sources = {
         default = { 'lsp', 'path', 'snippets', 'lazydev' },
+        per_filetype = {
+          sql = { 'dadbod', inherit_defaults = true },
+          mysql = { 'dadbod', inherit_defaults = true },
+          plsql = { 'dadbod', inherit_defaults = true },
+        },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+          -- tabele/kolumny z bazy podłączonej przez :DBUI
+          dadbod = { name = 'Dadbod', module = 'vim_dadbod_completion.blink' },
         },
       },
 
@@ -1078,8 +1044,11 @@ require('lazy').setup({
     config = function()
       ---@diagnostic disable-next-line: missing-fields
       require('tokyonight').setup {
+        transparent = true, -- przezroczyste tło (przetrwa ponowne :colorscheme)
         styles = {
           comments = { italic = false }, -- Disable italics in comments
+          floats = 'transparent',
+          sidebars = 'transparent',
         },
       }
 
@@ -1148,29 +1117,22 @@ require('lazy').setup({
       },
       indent = { enable = true, disable = { 'ruby', 'c', 'cpp' } },
     },
-    {
-      'nvim-treesitter/nvim-treesitter-context',
-      event = 'BufReadPre', -- Load when opening a file
-      config = function()
-        require('treesitter-context').setup {
-          enable = true,
-          max_lines = 3, -- How many lines the window should take up
-          min_window_height = 0,
-          line_numbers = true,
-          multiline_threshold = 20, -- Maximum number of lines to show for a single context
-          trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded
-          mode = 'cursor', -- Line used to calculate context. Choices: 'cursor', 'topline'
-          separator = '-',
-          zindex = 20, -- The Z-index of the context window
-        }
-      end,
-    },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
     --
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-    --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  },
+  { -- Pokazuje nagłówek bieżącej funkcji/klasy na górze okna
+    'nvim-treesitter/nvim-treesitter-context',
+    event = 'BufReadPre', -- Load when opening a file
+    opts = {
+      max_lines = 3, -- How many lines the window should take up
+      multiline_threshold = 20, -- Maximum number of lines to show for a single context
+      trim_scope = 'outer', -- Which context lines to discard if `max_lines` is exceeded
+      mode = 'cursor', -- Line used to calculate context. Choices: 'cursor', 'topline'
+      separator = '-',
+    },
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
@@ -1221,48 +1183,24 @@ require('lazy').setup({
   },
 })
 
+-- Automatyczna aktywacja .venv z katalogu startowego (projekty uv).
+-- Działa przed startem LSP, więc pyright/debugpy/terminal widzą właściwego pythona.
+-- Ręczne przełączanie venv: <leader>cv (venv-selector).
+-- NOTE: celowo NIE ustawiamy vim.g.python3_host_prog — provider Neovima wymaga `pynvim`,
+-- którego zwykle nie ma w venv projektu.
+local venv_path = vim.fn.getcwd() .. '/.venv'
+if vim.fn.executable(venv_path .. '/bin/python') == 1 then
+  vim.env.VIRTUAL_ENV = venv_path
+  vim.env.PATH = venv_path .. '/bin:' .. vim.env.PATH
+  vim.api.nvim_create_autocmd('VimEnter', {
+    once = true,
+    callback = function()
+      vim.defer_fn(function()
+        vim.notify('🐍 Virtual environment: ' .. vim.fn.fnamemodify(venv_path, ':h:t') .. '/.venv', vim.log.levels.INFO)
+      end, 500)
+    end,
+  })
+end
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
-
--- Make Neovim background transparent
-vim.api.nvim_set_hl(0, 'Normal', { bg = 'none' })
-vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })
-vim.api.nvim_set_hl(0, 'SignColumn', { bg = 'none' })
-vim.api.nvim_set_hl(0, 'LineNr', { bg = 'none' })
-vim.api.nvim_set_hl(0, 'FloatBorder', { bg = 'none' })
-
--- Automatyczne ładowanie .venv (Backend Developer Style)
-local function load_venv()
-  local venv_path = vim.fn.getcwd() .. '/.venv'
-  local python_bin = venv_path .. '/bin/python'
-
-  -- Sprawdź czy .venv/bin/python istnieje
-  if vim.fn.executable(python_bin) == 1 then
-    -- Ustaw zmienną środowiskową dla terminala i procesów podrzędnych
-    vim.env.VIRTUAL_ENV = venv_path
-    vim.env.PATH = venv_path .. '/bin:' .. vim.env.PATH
-
-    -- Ustaw pythona dla providera Neovima (ważne dla pluginów)
-    vim.g.python3_host_prog = python_bin
-
-    -- Poinformuj użytkownika (opcjonalnie)
-    -- print("Aktywowano venv: " .. venv_path)
-  end
-end
-
--- Uruchom przy starcie
-load_venv()
--- Powiadomienie o załadowanym venv
-local function notify_venv()
-  if vim.env.VIRTUAL_ENV then
-    local venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV, ':t')
-    vim.notify('🐍 Virtual environment: ' .. venv_name, vim.log.levels.INFO)
-  end
-end
-
--- Pokaż venv przy starcie
-vim.api.nvim_create_autocmd('VimEnter', {
-  callback = function()
-    vim.defer_fn(notify_venv, 500)
-  end,
-})
