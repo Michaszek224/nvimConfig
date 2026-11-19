@@ -127,6 +127,19 @@ return {
     },
   },
 
+  { -- Multiple cursors: <C-n> selects the word, repeat for the next occurrences
+    'mg979/vim-visual-multi',
+    branch = 'master',
+    event = 'VeryLazy',
+    init = function()
+      vim.g.VM_default_mappings = 1
+      vim.g.VM_maps = {
+        ['Find Under'] = '<C-n>',
+        ['Find Subword Under'] = '<C-n>',
+      }
+    end,
+  },
+
   { -- Project-wide lists: diagnostics, symbols, LSP references, quickfix
     'folke/trouble.nvim',
     cmd = 'Trouble',

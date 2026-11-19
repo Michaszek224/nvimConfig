@@ -126,6 +126,18 @@ return {
         progress = { enabled = true }, -- replaces fidget
         signature = { enabled = false }, -- blink.cmp shows signatures
       },
+      routes = {
+        { -- pyright reports progress on every didChange (each keystroke); hide it
+          filter = {
+            event = 'lsp',
+            kind = 'progress',
+            cond = function(message)
+              return vim.tbl_get(message.opts, 'progress', 'client') == 'pyright'
+            end,
+          },
+          opts = { skip = true },
+        },
+      },
       presets = {
         bottom_search = true, -- / and ? stay at the bottom
         command_palette = true, -- cmdline and popupmenu together

@@ -133,6 +133,20 @@ Python: przy starcie aktywuje się `./.venv` z katalogu, w którym uruchomiono n
 | `va)` / `yinq` / `ci'` | obiekty tekstowe mini.ai (around/inside, next/last) |
 | `gc{ruch}` / `gcc` | zakomentuj (wbudowane) |
 
+### Wiele kursorów (vim-visual-multi)
+
+| Skrót | Akcja |
+|---|---|
+| `<C-n>` | zaznacz słowo pod kursorem; kolejne `<C-n>` dodaje następne wystąpienie |
+| `n` / `N` | (w trybie VM) następne / poprzednie wystąpienie |
+| `q` | pomiń aktualne wystąpienie i przejdź do następnego |
+| `Q` | usuń aktualne zaznaczenie |
+| `<C-Down>` / `<C-Up>` | dodaj kursor w linii niżej / wyżej |
+| `c`, `i`, `a`, `A`, `d` | edytuj wszystkie kursory naraz |
+| `<Esc>` | wyjdź z trybu wielu kursorów |
+
+Przykład „zmień 4 następne wystąpienia": ustaw kursor na słowie → `<C-n>` ×4 → `c` → wpisz nowy tekst → `<Esc>`.
+
 ### Git
 
 | Skrót | Akcja |
